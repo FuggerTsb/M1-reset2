@@ -1,0 +1,30 @@
+local KeyCodes = {
+    Enum.KeyCode.A,
+    Enum.KeyCode.D,
+}
+
+local sidedash = {
+    [1] = {
+        ["Dash"] = KeyCodes[math.random(1, #KeyCodes)],
+        ["Key"] = Enum.KeyCode.Q,
+        ["Goal"] = "KeyPress",
+    }
+}
+local frontdash = {
+    [1] = {
+        ["Dash"] = Enum.KeyCode.W,
+        ["Key"] = Enum.KeyCode.Q,
+        ["Goal"] = "KeyPress",
+    }
+}
+
+game:GetService("UserInputService").InputBegan:Connect(function(input, gameproc)
+    if gameproc then return end
+
+    if input.KeyCode == Enum.KeyCode.E then
+        game:GetService("Players").LocalPlayer.Character.Communicate:FireServer(unpack(sidedash))
+    end
+    if input.KeyCode == Enum.KeyCode.R then
+        game:GetService("Players").LocalPlayer.Character.Communicate:FireServer(unpack(frontdash))
+    end
+end)
