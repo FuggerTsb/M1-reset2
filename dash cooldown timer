@@ -1,0 +1,157 @@
+local UserInputService = game:GetService("UserInputService")
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local player = Players.LocalPlayer
+
+local timerActiveQW = false
+local timerActiveE = false
+local screenGui
+local timerLabelQW
+local timerLabelE
+
+-- Create GUI with larger timer
+local function createGui()
+    if screenGui then screenGui:Destroy() end
+
+    screenGui = Instance.new("ScreenGui")
+    screenGui.ResetOnSpawn = false
+    screenGui.Parent = player:WaitForChild("PlayerGui")
+
+    -- Timer label for Q or Q + W
+    timerLabelQW = Instance.new("TextLabel")
+    timerLabelQW.Size = UDim2.new(0, 200, 0, 60)
+    timerLabelQW.Position = UDim2.new(0, 10, 0, 10)
+    timerLabelQW.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    timerLabelQW.BackgroundTransparency = 0.3
+    timerLabelQW.BorderSizePixel = 2
+    timerLabelQW.BorderColor3 = Color3.new(1, 1, 1)
+
+    timerLabelQW.TextColor3 = Color3.new(1, 1, 1)
+    timerLabelQW.Font = Enum.Font.GothamBold
+    timerLabelQW.TextSize = 36
+    timerLabelQW.Text = ""
+    timerLabelQW.Visible = false
+    timerLabelQW.Parent = screenGui
+
+    -- Timer label for E key
+    timerLabelE = Instance.new("TextLabel")
+    timerLabelE.Size = UDim2.new(0, 200, 0, 60)
+    timerLabelE.Position = UDim2.new(0, 10, 0, 80) -- Below the first timer
+    timerLabelE.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    timerLabelE.BackgroundTransparency = 0.3
+    timerLabelE.BorderSizePixel = 2
+    timerLabelE.BorderColor3 = Color3.new(1, 1, 1)
+
+    timerLabelE.TextColor3 = Color3.new(1, 1, 1)
+    timerLabelE.Font = Enum.Font.GothamBold
+    timerLabelE.TextSize = 36
+    timerLabelE.Text = ""
+    timerLabelE.Visible = false
+    timerLabelE.Parent = screenGui
+end
+
+-- Timer countdown for Q + W (5.5 seconds)
+local function startTimerQW()
+    if timerActiveQW then return end
+
+    timerActiveQW = true
+    timerLabelQW.Visible = true
+
+    local timeLeft = 5.5
+    local connection
+
+    connection = RunService.RenderStepped:Connect(function(dt)
+        timeLeft -= dt
+        if timeLeft <= 0 then
+            timerLabelQW.Visible = false
+            timerLabelQW.Text = ""
+            timerActiveQW = false
+            connection:Disconnect()
+        else
+            timerLabelQW.Text = string.format("%.1f", timeLeft)
+        end
+    end)
+end
+
+-- Timer countdown for E (6 seconds)
+local function startTimerE()
+    if timerActiveE then return end
+
+    timerActiveE = true
+    timerLabelE.Visible = true
+
+    local timeLeft = 5.8
+    local connection
+
+    connection = RunService.RenderStepped:Connect(function(dt)
+        timeLeft -= dt
+        if timeLeft <= 0 then
+            timerLabelE.Visible = false
+            timerLabelE.Text = ""
+            timerActiveE = false
+            connection:Disconnect()
+        else
+            timerLabelE.Text = string.format("%.1f", timeLeft)
+        end
+    end)
+end
+
+-- Track currently held keys
+local keysHeld = {}
+
+-- Input Began: Update held keys and check condition on Q, Q+W, or E press
+UserInputService.InputBegan:Connect(function(input, isProcessed)
+    if isProcessed then return end
+    if input.UserInputType == Enum.UserInputType.Keyboard then
+        keysHeld[input.KeyCode] = true
+
+        if input.KeyCode == Enum.KeyCode.Q then
+            local holdingQ = keysHeld[Enum.KeyCode.Q] == true
+            local holdingW = keysHeld[Enum.KeyCode.W] == true
+
+            -- Count total keys held down
+            local totalKeysHeld = 0
+            for _, _ in pairs(keysHeld) do
+                totalKeysHeld += 1
+            end
+
+            -- Allow only:
+            -- Q alone (1 key) OR Q + W only (2 keys)
+            if (holdingQ and totalKeysHeld == 1) or (holdingQ and holdingW and totalKeysHeld == 2) then
+                startTimerQW()
+            end
+        end
+
+        -- E key handling: trigger timer when E is pressed alone
+        if input.KeyCode == Enum.KeyCode.E then
+            local holdingE = keysHeld[Enum.KeyCode.E] == true
+
+            -- Count total keys held down
+            local totalKeysHeld = 0
+            for _, _ in pairs(keysHeld) do
+                totalKeysHeld += 1
+            end
+
+            -- Only E pressed, no other key
+            if holdingE and totalKeysHeld == 1 then
+                startTimerE()
+            end
+        end
+    end
+end)
+
+-- Input Ended: Remove released keys
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.Keyboard then
+        keysHeld[input.KeyCode] = nil
+    end
+end)
+
+-- Handle respawn
+player.CharacterAdded:Connect(function()
+    wait(1)
+    createGui()
+end)
+
+-- Initial setup
+createGui()
