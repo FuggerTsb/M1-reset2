@@ -34,30 +34,33 @@ local function makeJump(character)
     end
 end
 
--- Function to set up keybind listener
-local function setupKeyListener(character)
-    userInputService.InputBegan:Connect(function(input, gameProcessed)
-        if gameProcessed then return end
+-- Function to set up keybind listener (only set once)
+local function onKeyPress(input, gameProcessed)
+    if gameProcessed or not player.Character then return end
+    local character = player.Character
+    
+    if input.KeyCode == Enum.KeyCode.V then
+        makeJump(character)
+        
+        -- Enable no-clip for 2 seconds
+        toggleNoClip(character, true)
+        
+        -- Perform the fling
+        fling(character)
 
-        if input.KeyCode == Enum.KeyCode.V then
-            -- Make the character jump immediately
-            makeJump(character)
-            
-            -- Then perform the fling
-            toggleNoClip(character, true)
-            fling(character)
-            wait(1) -- Small delay before re-enabling collisions
+        -- Disable no-clip after 2 seconds
+        task.delay(10, function()
             toggleNoClip(character, false)
-        end
-    end)
+        end)
+    end
 end
+
+-- Listen for key presses globally (only once)
+userInputService.InputBegan:Connect(onKeyPress)
 
 -- Detect when character is added (including respawns)
 local function onCharacterAdded(character)
-    local humanoidRootPart = character:WaitForChild("HumanoidRootPart", 10) -- Wait to ensure it's loaded
-    if humanoidRootPart then
-        setupKeyListener(character)
-    end
+    character:WaitForChild("HumanoidRootPart", 10) -- Ensure it's loaded
 end
 
 -- Initial setup for current character
