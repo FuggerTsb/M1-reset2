@@ -1,0 +1,69 @@
+local player = game.Players.LocalPlayer
+local userInputService = game:GetService("UserInputService")
+
+-- Function to enable/disable no-clip effect
+local function toggleNoClip(character, enable)
+    for _, part in pairs(character:GetChildren()) do
+        if part:IsA("BasePart") then
+            part.CanCollide = not enable
+        end
+    end
+end
+
+-- Fling function
+local function fling(character)
+    local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+    if humanoidRootPart then
+        local lookDirection = humanoidRootPart.CFrame.LookVector
+        local flingVelocity = lookDirection * 120 -- Adjust speed if needed
+
+        local bodyVelocity = Instance.new("BodyVelocity")
+        bodyVelocity.Velocity = flingVelocity
+        bodyVelocity.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+        bodyVelocity.Parent = humanoidRootPart
+
+        game.Debris:AddItem(bodyVelocity, 0.05) -- Clean up quickly
+    end
+end
+
+-- Function to make character jump
+local function makeJump(character)
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    if humanoid then
+        humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+    end
+end
+
+-- Function to set up keybind listener
+local function setupKeyListener(character)
+    userInputService.InputBegan:Connect(function(input, gameProcessed)
+        if gameProcessed then return end
+
+        if input.KeyCode == Enum.KeyCode.V then
+            -- Make the character jump immediately
+            makeJump(character)
+            
+            -- Then perform the fling
+            toggleNoClip(character, true)
+            fling(character)
+            wait(1) -- Small delay before re-enabling collisions
+            toggleNoClip(character, false)
+        end
+    end)
+end
+
+-- Detect when character is added (including respawns)
+local function onCharacterAdded(character)
+    local humanoidRootPart = character:WaitForChild("HumanoidRootPart", 10) -- Wait to ensure it's loaded
+    if humanoidRootPart then
+        setupKeyListener(character)
+    end
+end
+
+-- Initial setup for current character
+if player.Character then
+    onCharacterAdded(player.Character)
+end
+
+-- Reconnect when the player respawns
+player.CharacterAdded:Connect(onCharacterAdded)
