@@ -1,22 +1,23 @@
--- LocalScript
-
 local UserInputService = game:GetService("UserInputService")
 local Players = game:GetService("Players")
 local Debris = game:GetService("Debris")
 
 local player = Players.LocalPlayer
-
--- Replace with your custom animation if you want
 local JUMP_ANIM_ID = "rbxassetid://507765000"
-
--- Variable to track cooldown state
 local canBoost = true
+
+local function setCollision(character, state)
+	for _, part in pairs(character:GetDescendants()) do
+		if part:IsA("BasePart") then
+			part.CanCollide = state
+		end
+	end
+end
 
 local function onCharacterAdded(character)
 	local humanoid = character:WaitForChild("Humanoid")
 	local rootPart = character:WaitForChild("HumanoidRootPart")
 
-	-- Load the animation
 	local anim = Instance.new("Animation")
 	anim.AnimationId = JUMP_ANIM_ID
 	local track = humanoid:LoadAnimation(anim)
@@ -24,7 +25,6 @@ local function onCharacterAdded(character)
 	UserInputService.InputBegan:Connect(function(input, gameProcessed)
 		if gameProcessed then return end
 		if input.KeyCode == Enum.KeyCode.Minus and canBoost then
-			-- Prevent triggering the boost while on cooldown
 			canBoost = false
 
 			-- Play jump animation
@@ -32,27 +32,32 @@ local function onCharacterAdded(character)
 				track:Play()
 			end
 
-			-- Temporarily stop walk animation and set walk speed to zero
-			local originalSpeed = humanoid.WalkSpeed
-			humanoid.WalkSpeed = 0
+			-- Disable collisions temporarily
+			setCollision(character, false)
 
-			-- Apply boost (force forward and upward)
+			-- Apply boost
 			local direction = rootPart.CFrame.LookVector
 			local bodyVelocity = Instance.new("BodyVelocity")
-			bodyVelocity.Velocity = (direction * 102) + Vector3.new(0, 25, 0) -- Adjust the force
-			bodyVelocity.MaxForce = Vector3.new(1, 1, 1) * 1e5 -- Strong force to push
+			bodyVelocity.Velocity = (direction * 102) + Vector3.new(0, 25, 0)
+			bodyVelocity.MaxForce = Vector3.new(1, 1, 1) * 1e5
 			bodyVelocity.P = 1e5
 			bodyVelocity.Parent = rootPart
-			Debris:AddItem(bodyVelocity, 0.2) -- Cleanup after 0.2 seconds
+			Debris:AddItem(bodyVelocity, 0.2)
 
-			-- Restore walk speed after a short delay
+			local originalSpeed = humanoid.WalkSpeed
+			humanoid.WalkSpeed = 0
 			task.delay(0.3, function()
 				humanoid.WalkSpeed = originalSpeed
 			end)
 
-			-- Cooldown timer (1.5 seconds)
-			task.wait(0.55)
-			canBoost = true -- Reset cooldown
+			-- Re-enable collisions after 2 seconds
+			task.delay(2, function()
+				setCollision(character, true)
+			end)
+
+			-- Cooldown timer (2 seconds)
+			task.wait(2)
+			canBoost = true
 		end
 	end)
 end
