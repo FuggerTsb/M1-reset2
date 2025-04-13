@@ -39,7 +39,7 @@ local function onCharacterAdded(character)
 			-- Apply boost (force forward and upward)
 			local direction = rootPart.CFrame.LookVector
 			local bodyVelocity = Instance.new("BodyVelocity")
-			bodyVelocity.Velocity = (direction * 97) + Vector3.new(0, 25, 0) -- Adjust the force
+			bodyVelocity.Velocity = (direction * 105) + Vector3.new(0, 25, 0) -- Adjust the force
 			bodyVelocity.MaxForce = Vector3.new(1, 1, 1) * 1e5 -- Strong force to push
 			bodyVelocity.P = 1e5
 			bodyVelocity.Parent = rootPart
