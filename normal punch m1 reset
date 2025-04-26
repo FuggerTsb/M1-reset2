@@ -1,0 +1,69 @@
+local UserInputService = game:GetService("UserInputService")
+local Players = game:GetService("Players")
+local Debris = game:GetService("Debris")
+
+local player = Players.LocalPlayer
+local JUMP_ANIM_ID = "rbxassetid://507765000"
+local canBoost = true
+
+local function setCollision(character, state)
+	for _, part in pairs(character:GetDescendants()) do
+		if part:IsA("BasePart") then
+			part.CanCollide = state
+		end
+	end
+end
+
+local function onCharacterAdded(character)
+	local humanoid = character:WaitForChild("Humanoid")
+	local rootPart = character:WaitForChild("HumanoidRootPart")
+
+	local anim = Instance.new("Animation")
+	anim.AnimationId = JUMP_ANIM_ID
+	local track = humanoid:LoadAnimation(anim)
+
+	UserInputService.InputBegan:Connect(function(input, gameProcessed)
+		if gameProcessed then return end
+		if input.KeyCode == Enum.KeyCode.Zero and canBoost then
+			canBoost = false
+
+			-- Play jump animation
+			if track then
+				track:Play()
+			end
+
+			-- Disable collisions temporarily
+			setCollision(character, false)
+
+			-- Apply boost
+			local direction = rootPart.CFrame.LookVector
+			local bodyVelocity = Instance.new("BodyVelocity")
+			bodyVelocity.Velocity = (direction * 175) + Vector3.new(0, 25, 0)
+			bodyVelocity.MaxForce = Vector3.new(1, 1, 1) * 1e5
+			bodyVelocity.P = 1e5
+			bodyVelocity.Parent = rootPart
+			Debris:AddItem(bodyVelocity, 0.2)
+
+			local originalSpeed = humanoid.WalkSpeed
+			humanoid.WalkSpeed = 0
+			task.delay(0.3, function()
+				humanoid.WalkSpeed = originalSpeed
+			end)
+
+			-- Re-enable collisions after 2 seconds
+			task.delay(2, function()
+				setCollision(character, true)
+			end)
+
+			-- Cooldown timer (2 seconds)
+			task.wait(2)
+			canBoost = true
+		end
+	end)
+end
+
+if player.Character then
+	onCharacterAdded(player.Character)
+end
+
+player.CharacterAdded:Connect(onCharacterAdded)
