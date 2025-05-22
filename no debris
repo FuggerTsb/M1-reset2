@@ -1,7 +1,7 @@
 -- Place this in ServerScriptService
 
 local debrisFolderName = "Thrown"
-local cleanupInterval = 3 -- seconds
+local cleanupInterval = 2 -- seconds
 local namesToRemove = {
 	["Small Debris"] = true,
 	["Debris"] = true
