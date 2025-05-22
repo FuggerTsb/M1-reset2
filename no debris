@@ -1,0 +1,32 @@
+-- Place this in ServerScriptService
+
+local debrisFolderName = "Thrown"
+local cleanupInterval = 3 -- seconds
+local namesToRemove = {
+	["Small Debris"] = true,
+	["Debris"] = true
+}
+
+-- Function to clean matching debris
+local function cleanDebris()
+	local debrisFolder = workspace:FindFirstChild(debrisFolderName)
+	if not debrisFolder then return end
+
+	for _, item in ipairs(debrisFolder:GetChildren()) do
+		if item:IsA("BasePart") or item:IsA("Model") then
+			if namesToRemove[item.Name] then
+				pcall(function()
+					item:Destroy()
+				end)
+			end
+		end
+	end
+end
+
+-- Run cleanup in loop forever
+task.spawn(function()
+	while true do
+		task.wait(cleanupInterval)
+		cleanDebris()
+	end
+end)
